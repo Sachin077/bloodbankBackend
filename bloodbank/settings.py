@@ -25,7 +25,7 @@ SECRET_KEY = 'xj729+=%kkhf3=1hw)%$9v44g$o4zwnxx+$7$2yj(azk)bv*58'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'bloodbankApp'
 ]
 
 MIDDLEWARE = [
