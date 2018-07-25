@@ -365,8 +365,10 @@ def send_notifications(blood_request):
 	for user in users:
 		reg_ids.append(user.device_token)
 
+	requester = User.objects.get(email_id=blood_request.email_id)
+
 	message_title = "New Blood request"
-	message_body = "Someone is dying"
+	message_body = str(requester.full_name) + " needs " + str(requester.blood_group) + " blood urgently"
 	result = FCMNotification(api_key=server_key).notify_multiple_devices(registration_ids=reg_ids, message_title=message_title, message_body=message_body)
 	return
 			
