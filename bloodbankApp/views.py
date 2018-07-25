@@ -19,6 +19,7 @@ import requests
 import datetime
 from itertools import chain
 from pyfcm import FCMNotification
+from django.utils import timezone
 
 # Create your views here.
 @csrf_exempt
@@ -26,6 +27,7 @@ def register(request):
 	if request.method == "POST":
 		try:
 			json_data = json.loads(request.body.decode("utf-8"))
+			#print(json_data)
 			emp_id = json_data['emp_id']
 			email_id = json_data['email_id']
 			full_name = json_data['name']
@@ -51,7 +53,7 @@ def register(request):
 			user.address=address
 			user.city=city
 			user.fit_for_donation=fit_for_donation
-			user.device_token = token
+			user.device_token = device_token
 			try:
 				user.save()
 			except:
@@ -144,6 +146,7 @@ def createRequest(request):
 	if request.method == 'POST':
 		try:
 			json_data = json.loads(request.body.decode("utf-8"))
+			print(json_data)
 			email_id = json_data['email_id']
 			blood_group = json_data['blood_group']
 			quantity = json_data['quantity']
@@ -162,7 +165,7 @@ def createRequest(request):
 			blood_request.deadline = deadline#datetime.datetime.strptime(str(deadline), "%Y-%m-%d").date()
 			blood_request.story = story
 			blood_request.provideCab = provideCab
-			blood_request.creationDate = datetime.datetime.now()
+			blood_request.creationDate = timezone.now()
 			blood_request.save()
 			send_notifications(blood_request)
 			return JsonResponse({"status": 'true', "request_id" : str(blood_request.id)})
@@ -234,8 +237,11 @@ def getRequestByUser(request):
 		email_id = request.GET['email_id']
 		blood_requests = BloodRequest.objects.filter(email_id=email_id)
 		struct = []
+		i = 0
 		for blood_request in blood_requests:
 			struct.append(json.loads(serializers.serialize('json', [blood_request,]))[0]['fields'])
+			struct[i]['id'] = blood_request.id
+			i = i+1
 		
 		return JsonResponse(struct, safe=False)
 	else:
@@ -254,14 +260,25 @@ def queryRequestForDonor(request):
 
 		blood_requests = BloodRequest.objects.filter(blood_group=user.blood_group,city=user.city)
 		struct = []
+		i=0
 		for blood_request in blood_requests:
 			response = Response.objects.filter(email_id=email_id,request_id=blood_request.id)
+			requester = None
 			if response.count() == 0:
 				response = Response()
+				requester = User()
 			else:
 				response = response[0]
+				requester = User.objects.get(email_id=response.email_id)
+
 			#combined = list(chain(blood_request,response))
-			struct.append(json.loads(serializers.serialize('json', [blood_request, response])))
+			struct.append(json.loads(serializers.serialize('json', [blood_request,]))[0]['fields'])
+			struct[i]['id'] = blood_request.id
+			struct[i]['user_response'] = response.user_response
+			struct[i]['name'] = requester.full_name
+			struct[i]['phone'] = requester.phone
+
+			i = i+1
 		
 		return JsonResponse(struct, safe=False)
 	else:
